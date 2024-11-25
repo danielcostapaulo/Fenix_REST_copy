@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-xmlrpc/0.4.3/jquery.xmlrpc.js"> </script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.9.0/dist/semantic.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/fomantic-ui@2.9.0/dist/semantic.min.js"></script>
+
+
+    <script>
+        function UpdatePage(){
+            var student_id='{{student_id}}'
+            $.ajax({
+                url:'http://'+window.location.hostname+':8001/activity/'+student_id+'/',
+                type:'GET',
+                dataType:'json',
+                success:function(data){
+                    $('#ActivityTable > tbody:last-child').empty()
+                    const x_P=[]
+                    const y_P=[]
+                    const x_Ad=[]
+                    const y_Ad=[]
+                    const x_Ac=[]
+                    const y_Ac=[]
+                    data.forEach(activity=>{
+                        const activity_date=activity['start_time'].substr(0,10)
+                        const start_time=new Date()
+                        start_time.setHours(activity['start_time'].substr(11,2),activity['start_time'].substr(14,2),activity['start_time'].substr(17,2))
+                        const stop_time=new Date()
+                        stop_time.setHours(activity['stop_time'].substr(11,2),activity['stop_time'].substr(14,2),activity['stop_time'].substr(17,2))
+                        const time=(stop_time-start_time)/3600000
+                        if(activity['type']=='Personal'){
+                            if(x_P.includes(activity_date)){
+                                index=x_P.indexOf(activity_date)
+                                y_P[index]=y_P[index]+time
+                            }
+                            else{
+                                x_P.push(activity_date)
+                                y_P.push(time)
+                            }
+                        }
+                        if(activity['type']=='Administrative'){
+                            if(x_Ad.includes(activity_date)){
+                                index=x_Ad.indexOf(activity_date)
+                                y_Ad[index]=y_Ad[index]+time
+                            }
+                            else{
+                                x_Ad.push(activity_date)
+                                y_Ad.push(time)
+                            }
+                        }
+                        if(activity['type']=='Academic'){
+                            if(x_Ac.includes(activity_date)){
+                                index=x_Ac.indexOf(activity_date)
+                                y_Ac[index]=y_Ac[index]+time
+                            }
+                            else{
+                                x_Ac.push(activity_date)
+                                y_Ac.push(time)
+                            }
+                        }
+                        $('#ActivityTable > tbody:last-child').append('<tr><td>'+activity['name']+'</td><td>'+activity['type']+'</td><td>'+activity_date+'</td><td>'+time+" Hours"+'</td></tr>')
+                    });
+                    var Personal={
+                        x:x_P,
+                        y:y_P,
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        showlegend:'True',
+                        name: 'Personal',
+                        transforms: [{
+                            type: 'sort',
+                            target: 'x',
+                            order: 'ascending'
+                        }]
+                    }
+                    var Administrative={
+                        x:x_Ad,
+                        y:y_Ad,
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        name: 'Administrative',
+                        transforms: [{
+                            type: 'sort',
+                            target: 'x',
+                            order: 'ascending'
+                        }]
+                    }
+                    var Academic={
+                        x:x_Ac,
+                        y:y_Ac,
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        name: 'Academic',
+                        transforms: [{
+                            type: 'sort',
+                            target: 'x',
+                            order: 'ascending'
+                        }]
+                    }
+                    var layout={
+                        yaxis:{range:[0,24]}
+                    }
+                    var plotdata=[Personal,Administrative,Academic]
+                    plot=document.getElementById('mygraph')
+                    Plotly.newPlot( plot,plotdata,layout)
+                },
+                error:function(data){
+                    alert("Something went wrong :(")
+                }
+
+            });
+        }
+        $(document).ready(function(e){
+            UpdatePage()
+            $('#eval').hide();
+            $('#submit4').hide();
+            $('#form4').hide();
+            $('#submit3').click(function(){
+
+                var starttt=$("#calendar-5").calendar("get date");
+                var enddd=$("#calendar-6").calendar("get date");
+                window.nameeee=$("#dropdown2").dropdown("get value");
+                if (starttt==null){
+                    alert("Select a start date")
+                }
+                if (endd0=null){
+                    alert("Select an end date")
+                }
+                if (window.nameeee==""){
+                    window.nameeee="empty"
+                    alert("Select an activity")
+                }
+                var std="{{student_id}}";
+                var typeee="Administrative";
+                var requestData2={'type':typeee , 'name':window.nameeee, 'student_id':std, 'start_time':starttt, 'stop_time':enddd};
+                
+                $.ajax({
+                    url: 'http://'+window.location.hostname+':8001/activity/',
+                    type:"POST",
+                    dataType: "json",
+                    contentType: 'application/json',
+                    data: JSON.stringify(requestData2),
+                    success:function(){
+                        UpdatePage()
+                        $('#eval').show();
+                    },
+                    error:function(){
+                        alert("Please make sure the dates follow the rules")
+                    }
+                });
+                
+                $('#form3').form('clear');
+                $('#dropdown2').dropdown('clear');
+            });
+            $('#submit1').click(function(){
+                var namee="nothing"
+                if ($("#Sleep").checkbox("is checked")){
+                    namee="Sleep"
+                } else if ($("#Eat").checkbox("is checked")){
+                    namee="Eat"
+                } else if ($("#Leisure").checkbox("is checked")){
+                    namee="Leisure"
+                } else if ($("#Sport").checkbox("is checked")){
+                    namee="Sport"
+                } else if ($("#Other").checkbox("is checked")){
+                    namee="Other"
+                }
+                var start=$("#calendar-1").calendar("get date");
+                var end=$("#calendar-2").calendar("get date");
+                var typee="Personal";
+                var std="{{student_id}}"
+                const requestData={'type':typee , 'name':namee, 'student_id':std, 'start_time':start, 'stop_time':end};
+                
+                if (namee=="nothing"){
+                    alert("Please tick one of the boxes")
+                }
+                if(start==null){
+                    alert("Please insert a start time")
+                }
+                if (end==null){
+                    alert("please insert an end time")
+                }
+
+                $.ajax({
+                    url: 'http://'+window.location.hostname+':8001/activity/',
+                    type:"POST",
+                    dataType: "json",
+                    contentType: 'application/json',
+                    data: JSON.stringify(requestData),
+                    success:function(){
+                        UpdatePage()
+                    },
+                    error:function(){
+                        alert("Please make sure the dates follow the rules")
+                    }
+                });
+                
+                $('#form1').form('clear');
+            });
+            $('#submit2').click(function(){
+                var startt=$("#calendar-3").calendar("get date");
+                var endd=$("#calendar-4").calendar("get date");
+                var extra=$("#dropdown1").dropdown("get value");
+                var std="{{student_id}}";
+                var namee;
+                if ($("#Attendclass").checkbox("is checked")){
+                    namee='Attend classes'
+                }
+                else if ($("#Study").checkbox("is checked")){
+                    namee='Study'
+                }
+                var requestData1={'type':'Academic' , 'name':namee, 'student_id':std, 'start_time':startt, 'stop_time':endd, 'extra':extra}
+
+                if (extra==""){
+                    extra="empty"
+                    alert("Please tick one of the boxes")
+                }
+                if(startt==null){
+                    alert("Please insert a start time")
+                }
+                if (endd==null){
+                    alert("please insert an end time")
+                }
+
+                $.ajax({
+                    url: 'http://'+window.location.hostname+':8001/activity/',
+                    type:"POST",
+                    dataType: "json",
+                    contentType: 'application/json',
+                    data: JSON.stringify(requestData1),
+                    success:function(){
+                        UpdatePage()
+                    },
+                    error:function(){
+                        alert("Please make sure the dates follow the rules")
+                    }
+                });
+                
+                $('#form2').form('clear');
+                $('#dropdown1').dropdown('clear');
+            });
+            $('#eval').click(function(){
+                $('#eval').hide();
+                $("#form3").hide();
+                $('#submit4').show();
+                $('#form4').show();
+                $('#h4').text("Evaluate the service:");
+                
+            });
+            $('#submit4').click(function(){
+                var evall=$('#slider').slider('get value');
+                var requestData3={'name': window.nameeee, 'Eval': evall};
+
+                $.ajax({
+                    url: 'http://'+window.location.hostname+':8001/eval/',
+                    type:"POST",
+                    dataType: "json",
+                    contentType: 'application/json',
+                    data: JSON.stringify(requestData3),
+                });
+
+
+                $('#eval').hide();
+                $('#form4').form('clear');
+                $('#form4').hide();
+                $('#submit4').hide();
+                $('#form3').show();
+            });
+        });
+
+    </script>
+
+    </head>
+
+
+
+    <body>
+        <h1> Welcome to IST Big Brother</h1>
+        <h3> User Id: {{student_id}}</h3>
+        <div>Note:Dates must be on the same day and cant overlap any other already ocupied dates</div>
+        <div class="ui top attached tabular menu">
+            <a class="active item" data-tab="first">Personal</a>
+            <a class="item" data-tab="second">Academic</a>
+            <a class="item" data-tab="third">Administrative</a>
+        </div>
+
+        <div class="ui bottom attached active tab segment" data-tab="first">
+            <div class="ui form" id="form1">
+                    <!-- <div class="field"> -->
+                        Start
+                        <div class="ui calendar" id="calendar-1">
+                            <div class="ui input left icon">
+                            <i class="calendar icon"></i>
+                            <input type="text" id='timeInputstart' placeholder="Date/Time">
+                            </div>
+                        </div>
+                    <!-- </div> -->
+                    <!-- <div class="field"> -->
+                        End
+                        <div class="ui calendar" id="calendar-2">
+                            <div class="ui input left icon">
+                                <i class="calendar icon"></i>
+                                <input type="text" id='timeInputend' placeholder="Date/Time">
+                            </div>
+                        </div>
+                    <!-- </div> -->
+                
+            
+                <div class="grouped fields">
+                <label>Select an activity</label>
+                <div class="field">
+                    <div class="ui radio checkbox" id="Sleep">
+                    <input type="radio" name="example2">
+                    <label>Sleep</label>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="ui radio checkbox" id=Leisure>
+                    <input type="radio" name="example2">
+                    <label>Leisure</label>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="ui radio checkbox" id="Eat">
+                    <input type="radio" name="example2">
+                    <label>Eat</label>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="ui radio checkbox" id="Sport">
+                    <input type="radio" name="example2">
+                    <label>Sport</label>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="ui radio checkbox" id="Other">
+                    <input type="radio" name="example2">
+                    <label>Other</label>
+                    
+                </div> 
+                
+                </div>
+                </div>
+
+                <div class="ui primary submit button" id="submit1">Submit</div>
+            </div>
+
+
+
+
+
+
+
+        </div>
+          <div class="ui bottom attached tab segment" data-tab="second">
+            <form class="ui form" id='form2' >
+
+                    <!-- <div class="field"> -->
+                        Start
+                        <div class="ui calendar" id="calendar-3">
+                            <div class="ui input left icon">
+                            <i class="calendar icon"></i>
+                            <input type="text" id='timeInputstart' placeholder="Date/Time">
+                            </div>
+                        </div>
+                    <!-- </div> -->
+                    <!-- <div class="field"> -->
+                        End
+                        <div class="ui calendar" id="calendar-4">
+                            <div class="ui input left icon">
+                                <i class="calendar icon"></i>
+                                <input type="text" id='timeInputend' placeholder="Date/Time">
+                            </div>
+                        </div>
+                    <!-- </div> -->
+                
+
+                <div class="grouped fields" id="rain">
+                    <label>Select a course</label>
+                    <div class="field">
+                        <div class="ui dropdown" id="dropdown1">
+                            <div class="default text">Choose an option</div>
+                            <i class="dropdown icon"></i>
+                            <div class="menu">
+                            {% for service in course %}
+                              <div class="item" data-value="{{service}}">{{service}}</div>
+                            {% endfor %}
+                            </div>
+                          </div>
+                    </div>
+                </div>
+                <div class="grouped fields">
+                    <div class="field">
+                        <div class="ui radio checkbox" id="Attendclass">
+                        <input type="radio" name="example2">
+                        <label>Attend classes</label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="ui radio checkbox" id="Study">
+                        <input type="radio" name="example2">
+                        <label>Study</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ui primary submit button" id="submit2">Submit</div> 
+            </form>
+
+           
+          </div>
+          <div class="ui bottom attached tab segment" data-tab="third">
+            <form class="ui form" id="form3">
+                
+                    <!-- <div class="field"> -->
+                        Start
+                        <div class="ui calendar" id="calendar-5">
+                            <div class="ui input left icon">
+                            <i class="calendar icon"></i>
+                            <input type="text" id='timeInputstart' placeholder="Date/Time">
+                            </div>
+                        </div>
+                    <!-- </div> -->
+                    <!-- <div class="field">  -->
+                        End
+                        <div class="ui calendar" id="calendar-6">
+                            <div class="ui input left icon">
+                                <i class="calendar icon"></i>
+                                <input type="text" id='timeInputend' placeholder="Date/Time">
+                            </div>
+                        </div>
+                    <!-- </div> -->
+               
+
+                    <div class="grouped fields" id="rain">
+                        <label>Select a service</label>
+                        <div class="field">
+                            <div class="ui dropdown" id="dropdown2">
+                                <div class="default text">Choose an option</div>
+                                <i class="dropdown icon"></i>
+                                <div class="menu">
+                                {% for x in service %}
+                                  <div class="item" data-value="{{x}}">{{x}}</div>
+                                {% endfor %}
+                                </div>
+                              </div>
+                        </div>
+                    </div>
+
+                <div class="ui primary submit button" id="submit3">Submit</div> <div class="ui button" id ="eval">Evaluate Service</div>
+            </form>
+            <form class="ui form" id="form4">
+                <h4 id="h4">Evaluate the service</h4>
+
+                <div class="ui labeled slider" id="slider" style="width: 300px; ;" ></div>
+                
+                <div class="ui primary submit button" id="submit4">Submit</div>
+            </form>
+          </div>
+
+        <div id="mygraph" style="width:100%;"></div>
+
+
+        <table class="ui celled table" id="ActivityTable" style="width:100%;">
+        <thead>
+            <tr><th>Activity</th>
+            <th>Type</th>
+            <th>Date</th>
+            <th>Time</th>
+        </tr></thead>
+        <tbody></tbody>
+        </table>
+        
+        
+    </body>
+
+
+    <script>        
+        $(".menu .item").tab();
+        $('#calendar-1').calendar();
+        $('#calendar-2').calendar();
+        $('#calendar-3').calendar();
+        $('#calendar-4').calendar();
+        $('#calendar-5').calendar();
+        $('#calendar-6').calendar();
+        $('#dropdown1').dropdown()
+        $('#dropdown2').dropdown()
+        $('#slider').slider({
+            min:0,
+            max:5,
+            smooth: true
+        });
+
+
+
+        
+    </script>
+    
+</html>

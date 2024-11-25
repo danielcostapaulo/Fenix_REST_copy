@@ -1,0 +1,24 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<h2>Activities of students</h2>
+
+<h3>Please insert a student number you wish to see the activities of:</h3>
+
+<div>
+    <form action="" method="post">
+        Student ID:
+        <textarea id="student_id" name="student_id" rows="1" cols="13">
+        </textarea>
+        <input type="submit">
+    </form>
+</div>
+
+{% for activity in studentlist %}
+
+<p>{{activity}}</p>
+
+{% endfor %}
+
+{% endblock %}

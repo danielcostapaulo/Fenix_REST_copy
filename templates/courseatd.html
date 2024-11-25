@@ -1,0 +1,15 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<h2>Services for admin</h2>
+
+<h3> The list of {{servicee}}'s attetndance:</h3>
+
+{% for i in list %}
+
+<p>{{i}}</p>
+
+{% endfor %}
+
+{% endblock %}

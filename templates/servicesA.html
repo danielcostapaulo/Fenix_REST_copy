@@ -1,0 +1,51 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<!DOCTYPE html>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+<script  src="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.7/dist/semantic.js">  </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-xmlrpc/0.4.3/jquery.xmlrpc.js"> </script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+
+
+
+<script>
+    function deleteService(service_name){
+        $.ajax({
+            url: '/services/',
+            type: "DELETE",
+            dataType: "json",
+            contentType: 'application/json',
+            data: JSON.stringify(service_name),
+        })
+        window.location.href="http://0.0.0.0:8000/services/"
+    }
+</script>
+
+<h2>Services for admin</h2>
+
+<h3>In this section you may create a service:</h3>
+<div>
+    <form action="" method="post">
+        Service name:
+        <textarea id="service_name" name="service_name" rows="1" cols="13">
+        </textarea>
+        <input type="submit">
+    </form>
+</div>
+
+
+<h3> The list of already existing services:</h3>
+
+{% for service in list %}
+
+<p>
+    {{service}}.
+    <button type="submit" onclick="deleteService('{{service}}')">Delete</button>
+</p>
+
+{% endfor %}
+
+{% endblock %}

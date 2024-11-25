@@ -1,0 +1,15 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<h2>Services for admin</h2>
+
+<h3> Click to see the course's attendance:</h3>
+
+{% for x in list %}
+
+<p><a href="/atd{{x}}"> {{x}}</a></p>
+
+{% endfor %}
+
+{% endblock %}

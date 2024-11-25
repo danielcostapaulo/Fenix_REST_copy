@@ -1,0 +1,15 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<h2>Services for admin</h2>
+
+<h3> Click to see the list of existing service evaluations:</h3>
+
+{% for eval in list %}
+
+<p><a href="/eval{{eval}}"> {{eval}}</a></p>
+
+{% endfor %}
+
+{% endblock %}
